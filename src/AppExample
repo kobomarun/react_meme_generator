@@ -1,0 +1,91 @@
+import React from 'react'
+
+import todoData from './todoData'
+
+function searchterm(searchword) {
+  const non = "No query found";
+  return function(item) {
+    if(item) {
+      return       item.author.toLowerCase().includes(searchword.toLowerCase())
+
+    } else {
+      return non
+    }
+  }
+}
+
+// const searchterm = searchword => item => {
+//   item.text.toLowerCase().includes(searchword.toLowerCase());
+// }
+
+class App extends React.Component {
+  constructor(props) {
+    super(props);
+    this.state = {
+      list:[],
+      search:''
+    }
+    this.removeItem = this.removeItem.bind(this);
+    this.search = this.search.bind(this);
+    this.setStories = this.setStories.bind(this)
+  }
+
+  componentDidMount() {
+    fetch('https://hn.algolia.com/api/v1/search?query=redux')
+    .then(response => response.json())
+    .then(result => this.setStories(result))
+    .catch(error => error)
+  }
+
+  setStories(result) {
+    this.setState({
+      list: result.hits
+    })
+  }
+
+  removeItem(id) {
+    console.log(id)
+    this.setState(prevState => {
+      const updated = prevState.list.filter(item => {
+        return(
+          item.objectID !== id
+
+        )
+        
+      })
+      return {
+        list: updated
+      }
+    })
+  }
+
+  search(e) {
+    this.setState({
+      search:e.target.value
+    })
+  }
+
+  render() {
+     if (!this.state.list) { return null; }
+
+    return(
+      <div>
+      <input type="text" onChange={this.search} placeholder="Search" /><br />
+      {this.state.list.filter(searchterm(this.state.search)).map(item => {
+        return(
+          <table id={item.objectID}>
+            <tr>
+              <td>{item.created_at}</td>
+              <td>{item.author}</td>
+              <td><button className="btn btn-primary"onClick={() => this.removeItem(item.objectID)}>Remove</button></td>
+            </tr>
+          </table>
+        );
+      })}
+      </div>
+      
+    );
+  }
+}
+
+export default App;
